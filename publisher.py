@@ -38,36 +38,23 @@ class Publisher(stomp.ConnectionListener):
 
     def disconnect(self):
          conn.disconnect()
-
-    def test(self):
-        host = "localhost:8161"
-        url = "http://localhost:8161/api/jolokia/list/org.apache.activemq:type=Broker,brokerName=localhost"
-        #url = "http://localhost:8161/api/jolokia/list/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=F1"
-        #url = "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=localhost"
-        headers = {'Origin': 'localhost', 'Authorization': 'Basic {}'.format(b64encode(b'admin:admin').decode('ascii'))}
-        conn = HTTPConnection(host)
-        conn.request('GET', url=url, headers=headers)
-        res = conn.getresponse()
-        info = json.loads(res.read().decode('ascii'))
-
-        print(info)
         
 
-    def delete_queue(self):
+    def delete_queue(self, queue, toplevel):
         host = "localhost:8161"
-        url = "http://hostname:8161/api/jolokia/exec/org.apache.activemq:type=Broker,brokerName=localhost/removeQueue/F2"
+        url = "http://hostname:8161/api/jolokia/exec/org.apache.activemq:type=Broker,brokerName=localhost/removeQueue/{}".format(queue)
         headers = {'Origin': 'localhost', 'Authorization': 'Basic {}'.format(b64encode(b'admin:admin').decode('ascii'))}
         conn = HTTPConnection(host)
         conn.request('GET', url=url, headers=headers)
+        self.fecha_tela(toplevel)
 
-    def delete_topic(self):
+    def delete_topic(self, topic, toplevel):
         host = "localhost:8161"
-        #url = "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName=F1"
-        url = "http://hostname:8161/api/jolokia/exec/org.apache.activemq:type=Broker,brokerName=localhost/removeTopic/T1"
-        #url = "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Broker,brokerName=localhost"
+        url = "http://hostname:8161/api/jolokia/exec/org.apache.activemq:type=Broker,brokerName=localhost/removeTopic/{}".format(topic)
         headers = {'Origin': 'localhost', 'Authorization': 'Basic {}'.format(b64encode(b'admin:admin').decode('ascii'))}
         conn = HTTPConnection(host)
         conn.request('GET', url=url, headers=headers)
+        self.fecha_tela(toplevel)
 
 
 
@@ -92,24 +79,38 @@ class Publisher(stomp.ConnectionListener):
         jogar_button.place(x=80, y=95)
 
 
-
-
     def janela_principal(self, jogador_name_input, toplevel):
         self.fecha_tela(toplevel)
         newWindow = Toplevel(root)
         newWindow.title("Confirma!")
-        newWindow.geometry("360x205")
+        newWindow.geometry("360x400")
+
+        newWindow.protocol("WM_DELETE_WINDOW", lambda: self.fecha_janela(newWindow))
 
         label_peca = Label(newWindow, text= 'Publicador: ' + str(jogador_name_input), height=0, padx=0, relief="flat", anchor="center",
                         font=('Ivy 10 bold'),
                             fg="#000000")
         label_peca.place(x=110, y=5)
 
-        sim_button = Button(newWindow, text='Gerenciar Tópico', width=12, command=lambda:self.mensagem_topico(newWindow))
-        sim_button.place(x=110, y=50)
+        label_peca = Label(newWindow, text= 'Tópico', height=0, padx=0, relief="flat", anchor="center",
+                        font=('Ivy 10 bold'),fg="#000000")
+        label_peca.place(x=110, y=30)
 
-        nao_button = Button(newWindow, text='Gerenciar Fila', width=12, command=lambda:self.mensagem_fila(newWindow))
-        nao_button.place(x=110, y=90)
+        button = Button(newWindow, text='Enviar Msg', width=12, command=lambda:self.mensagem_topico(newWindow))
+        button.place(x=110, y=60)
+
+        button = Button(newWindow, text='Deletar', width=12, command=lambda:self.deletar_topico(newWindow))
+        button.place(x=110, y=100)
+
+        label_peca = Label(newWindow, text= 'Fila', height=0, padx=0, relief="flat", anchor="center",
+                        font=('Ivy 10 bold'),fg="#000000")
+        label_peca.place(x=110, y=200)
+
+        nao_button = Button(newWindow, text='Enviar Msg', width=12, command=lambda:self.mensagem_fila(newWindow))
+        nao_button.place(x=110, y=230)
+
+        nao_button = Button(newWindow, text='Deletar', width=12, command=lambda:self.deletar_fila(newWindow))
+        nao_button.place(x=110, y=270)
 
     def mensagem_topico(self, toplevel):
         newWindow = Toplevel(root)
@@ -158,6 +159,44 @@ class Publisher(stomp.ConnectionListener):
         jogar_button = Button(newWindow, text='ENVIAR', font='sans 11 bold', width=12, height=int(1.5),
                                 command=lambda: self.send_message_queue(str(queue_name_input.get()), str(text_area_chat.get("1.0",'end-1c')), newWindow))
         jogar_button.place(x=80, y=300)
+
+    def deletar_topico(self, toplevel):
+        newWindow = Toplevel(root)
+        newWindow.title("DELETAR TOPICO")
+        newWindow.geometry("300x150")
+        newWindow.config(bg="#4F4F4F")
+
+        newWindow.protocol("WM_DELETE_WINDOW", lambda: self.fecha_tela(newWindow))
+
+        # BG cor de fundo  FG cor da letra
+        label = Label(newWindow, text="NOME DO TOPICO:", font=('Ivy 15 bold'), fg="#FFFFFF", bg="#4F4F4F")
+        label.place(x=40, y=20)
+
+        topic_name_input = Entry(newWindow, width=27)
+        topic_name_input.place(x=40, y=60)
+
+        jogar_button = Button(newWindow, text='DELETAR', font='sans 11 bold', width=12, height=int(1.5),
+                                command=lambda: self.delete_topic(str(topic_name_input.get()), newWindow))
+        jogar_button.place(x=80, y=95)
+
+    def deletar_fila(self, toplevel):
+        newWindow = Toplevel(root)
+        newWindow.title("DELETAR TOPICO")
+        newWindow.geometry("300x150")
+        newWindow.config(bg="#4F4F4F")
+
+        newWindow.protocol("WM_DELETE_WINDOW", lambda: self.fecha_tela(newWindow))
+
+        # BG cor de fundo  FG cor da letra
+        label = Label(newWindow, text="NOME DA FILA:", font=('Ivy 15 bold'), fg="#FFFFFF", bg="#4F4F4F")
+        label.place(x=40, y=20)
+
+        fila_name_input = Entry(newWindow, width=27)
+        fila_name_input.place(x=40, y=60)
+
+        jogar_button = Button(newWindow, text='DELETAR', font='sans 11 bold', width=12, height=int(1.5),
+                                command=lambda: self.delete_queue(str(fila_name_input.get()), newWindow))
+        jogar_button.place(x=80, y=95)
 
     def fecha_janela(self, Toplevel):
         Toplevel.destroy()
