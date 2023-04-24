@@ -10,3 +10,6 @@
 7) Enviar mensagens entre usuários diretamente offline.
 8) Enviar mensagens para tópicos.
 
+Links Úteis
+https://prensa.li/@adriano.mota/o-que-e-mensageria-e-o-que-eu-ganho-com-isso/
+https://ameyanekar.medium.com/create-an-activemq-client-using-python-c532b6f91074
